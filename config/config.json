@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "pedro",
+    "password": "shong777",
+    "database": "dindinn",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "pedro",
+    "password": "shong777",
+    "database": "dindinn",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "pedro",
+    "password": "shong777",
+    "database": "dindinn",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
