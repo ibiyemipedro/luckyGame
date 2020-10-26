@@ -14,17 +14,29 @@ result.treasures.shift();
 result.money_values.shift();
 
 
-exports.users = () => {
-  const users = result.users.map((user) => ({
-    id: user.B,
-    name: user.C,
-    age: user.D,
-    password: user.E,
-    email: user.F,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }));
-  return users;
+exports.users = async () => {
+  try {
+    const formattedUsers = []
+    for (let item of result.users) {
+      await hashPassFunction(item)
+    }
+    async function hashPassFunction(item) {
+      let hashedPass = await bcrypt.hash(item.E, security.salt);
+      let newUser = {
+        id: item.B,
+        name: item.C,
+        age: item.D,
+        password: hashedPass,
+        email: item.F,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      formattedUsers.push(newUser);
+    }
+    return formattedUsers;
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 exports.treasure = () => {

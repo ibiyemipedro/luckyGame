@@ -1,7 +1,5 @@
 const { Sequelize } = require('sequelize');
-
 const { dbDetails } = require('./config')
-
 
 // Connection parameters
 const database = new Sequelize(dbDetails.database, dbDetails.username, dbDetails.password, {
@@ -9,7 +7,6 @@ const database = new Sequelize(dbDetails.database, dbDetails.username, dbDetails
   dialect: 'postgres',
   // logging: (...msg) => console.log(msg),
 });
-
 
 // Connection to db
 const dbConnection = async () => {
@@ -22,5 +19,4 @@ const dbConnection = async () => {
   }
 
 }
-
 module.exports = { database, dbConnection };

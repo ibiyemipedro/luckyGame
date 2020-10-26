@@ -1,11 +1,5 @@
-const bcrypt = require('bcrypt');
-const ids = require('shortid');
-const jwt = require('jsonwebtoken');
 const HttpException = require('../../utils/classes/httpException');
-const { User, Treasure, MoneyValue } = require('../../models');
-const { locationDetails } = require('../../config/config');
-
-
+const { Treasure, MoneyValue } = require('../../models');
 
 /**
  * Play game user
@@ -15,75 +9,76 @@ const { locationDetails } = require('../../config/config');
  * @param amountValue - (optional) 
  * @returns treasure - Object
 */
-const findTreasure = async ({ longitude, latitude, distance, amountValue, email }) => {
+const findTreasure = async ({ longitude, latitude, distance, amountValue }) => {
 
-  console.log('Decoded Token Email : ', email)
+
+  // check if amount value is an integer not a float 
+  if (amountValue) {
+    if (amountValue % 1 !== 0) {
+      const error = new HttpException(400, 'Amount entered is not valid, Enter an Integer.', null);
+      throw error;
+    }
+  }
+
+  // restrict distance to 1 or 10
+  if (distance !== 1 && distance !== 10) {
+    const error = new HttpException(400, 'Distance must be 1 or 10.', null);
+    throw error;
+  }
 
   try {
-
     const treasures = await Treasure.findAll({
       include: [{
         model: MoneyValue
-      }]
+      }],
     });
-
     let availableTreasures = [];
     treasures.forEach(validTreasure);
-
     function validTreasure(item) {
-      let treasureDistance = distanceAlgorithm(item.latitude, locationDetails.refLatitude, item.longitude, locationDetails.refLongitude)
-      if ((distance * 1000) > treasureDistance) {
+      let treasureDistance = distCalculator(latitude, longitude, item.latitude, item.longitude)
+      if (treasureDistance < distance) {
         availableTreasures.push(item)
       }
     }
-
     if (amountValue) {
-
-      return treasure = {
-        data: treasures
-      }
-
+      const reducedTreasures = availableTreasures.reduce((acc, treasure) => {
+        let notValid = treasure.MoneyValues.some((item) => {
+          return item.amount < amountValue
+        })
+        if (!notValid) {
+          return [...acc, treasure]
+        }
+        return acc
+      }, [])
+      return reducedTreasures;
     } else {
-      return treasure = {
-        data: treasures
-      }
+      return availableTreasures
     }
-
   } catch (error) {
     console.log('In game error', error)
     throw error;
-
   }
-
 }
 
 
-// function to calculate the distance between two coordinates
-function distanceAlgorithm(lat1, lat2, lon1, lon2) {
-  // convert coordinates to radian before parsing to the formula
-  var φ1 = toRadians(lat1);
-  var φ2 = toRadians(lat2);
-  var Δφ = toRadians((lat2 - lat1));
-  var Δλ = toRadians((lon2 - lon1));
+// calculate the distance between two points
+function distCalculator(lat1, lon1, lat2, lon2) {
+  var R = 6371; // km
+  var dLat = toRad(lat2 - lat1);
+  var dLon = toRad(lon2 - lon1);
+  var lat1 = toRad(lat1);
+  var lat2 = toRad(lat2);
 
-  // calculating distance using haversine formula
-  var a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) *
-    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  // distance between points
-  var d = locationDetails.earthRadius * c;
-  console.log(d)
+  var d = R * c;
   return d;
 }
 
-// function to convert degrees to radian
-function toRadians(degrees) {
-  var pi = Math.PI;
-  return degrees * (pi / 180);
+// Converts numeric degrees to radians
+function toRad(Value) {
+  return Value * Math.PI / 180;
 }
-
-
 
 module.exports = { findTreasure }
